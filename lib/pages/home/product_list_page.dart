@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import '../../common/constants/text_constants.dart';
 import '../../router/app_router.dart';
 import '../../services/auth/auth_token_provider.dart';
@@ -33,7 +34,38 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
     });
     final state = ref.watch(productListProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text(TextConstants.productListTitle)),
+      appBar: AppBar(
+        titleSpacing: 0,
+        title: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: SizedBox(
+            height: 36,
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: TextConstants.productListTitle,
+                prefixIcon: const Icon(Icons.search, size: 20),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(18),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(MdiIcons.calendarCheckOutline),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: Icon(MdiIcons.bellOutline),
+            onPressed: () {},
+          ),
+          const SizedBox(width: 4),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: () => ref.read(productListProvider.notifier).refresh(),
         child: NotificationListener<ScrollNotification>(

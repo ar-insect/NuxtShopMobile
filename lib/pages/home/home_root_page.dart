@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../common/constants/text_constants.dart';
-import '../../router/app_router.dart';
-import '../../services/auth/auth_token_provider.dart';
+import '../../widgets/app_bottom_nav.dart';
 import 'favorites_page.dart';
 import 'product_list_page.dart';
 
@@ -27,26 +26,9 @@ class _HomeRootPageState extends ConsumerState<HomeRootPage> {
         index: _index,
         children: pages,
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: AppBottomNavigationBar(
         currentIndex: _index,
-        type: BottomNavigationBarType.fixed,
-        onTap: (value) {
-          if (value == 1) {
-            final token = ref.read(authTokenProvider);
-            if (token == null || token.isEmpty) {
-              AppRouter.goLogin(context);
-              return;
-            }
-          }
-          if (value == _index) return;
-          setState(() => _index = value);
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: TextConstants.productListTitle),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: TextConstants.favoritesTitle),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: TextConstants.cartTitle),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: TextConstants.profileTitle),
-        ],
+        onIndexChanged: (value) => setState(() => _index = value),
       ),
     );
   }
