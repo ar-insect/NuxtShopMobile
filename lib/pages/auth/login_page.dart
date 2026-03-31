@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'auth_repository.dart';
-import 'auth_token_provider.dart';
-import '../products/product_list_page.dart';
-import 'cookie.dart';
+import '../../repositories/auth_repository.dart';
+import '../../services/auth/auth_token_provider.dart';
+import '../../services/auth/cookie.dart';
+import '../../common/constants/text_constants.dart';
+import '../../router/app_router.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) => AuthRepository());
 
@@ -35,7 +36,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       ref.read(authTokenProvider.notifier).state = token;
       setAuthCookie(token);
       if (mounted) {
-        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const ProductListPage()));
+        AppRouter.goHome(context);
       }
     } catch (e) {
       if (mounted) {
@@ -48,20 +49,26 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('登录')),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => AppRouter.goHome(context),
+        ),
+        title: const Text(TextConstants.loginTitle),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            TextField(controller: _usernameCtrl, keyboardType: TextInputType.text, decoration: const InputDecoration(labelText: '用户名')),
+            TextField(controller: _usernameCtrl, keyboardType: TextInputType.text, decoration: const InputDecoration(labelText: TextConstants.usernameLabel)),
             const SizedBox(height: 12),
-            TextField(controller: _pwdCtrl, obscureText: true, decoration: const InputDecoration(labelText: '密码')),
+            TextField(controller: _pwdCtrl, obscureText: true, decoration: const InputDecoration(labelText: TextConstants.passwordLabel)),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _loading ? null : _login,
-                child: _loading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('登录'),
+                child: _loading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text(TextConstants.loginButton),
               ),
             ),
           ],

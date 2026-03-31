@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'product_model.dart';
-import 'product_repository.dart';
+import '../../models/product.dart';
+import '../../repositories/product_repository.dart';
 import '../auth/auth_token_provider.dart';
 
 class ProductListState {

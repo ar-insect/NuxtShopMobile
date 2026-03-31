@@ -1,14 +1,17 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import '../api/api_client.dart';
+import '../common/constants/api_constants.dart';
 
 class AuthRepository {
-  static const String baseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:4000');
+  final ApiClient _client;
+  AuthRepository({ApiClient? client}) : _client = client ?? ApiClient();
   Future<String> login({required String username, required String password}) async {
-    final uri = Uri.parse('$baseUrl/api/auth/login');
-    final res = await http.post(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'username': username, 'password': password}));
-    if (res.statusCode < 200 || res.statusCode >= 300) {
-      throw Exception('登录失败(${res.statusCode})');
-    }
+    final res = await _client.post(
+      ApiConstants.authLogin,
+      body: jsonEncode({'username': username, 'password': password}),
+      withAuth: false,
+      errorBuilder: (code, _) => '登录失败($code)',
+    );
     final data = _tryDecode(res.body);
     if (data is Map && data['token'] is String) {
       return data['token'] as String;

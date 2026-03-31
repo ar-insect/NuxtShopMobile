@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'product_list_notifier.dart';
-import 'product_card.dart';
+import '../../common/constants/text_constants.dart';
+import '../../router/app_router.dart';
+import '../../services/auth/auth_token_provider.dart';
+import '../../services/products/product_list_notifier.dart';
+import '../../widgets/product_card.dart';
 
 class ProductListPage extends ConsumerStatefulWidget {
   const ProductListPage({super.key});
@@ -30,7 +33,7 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
     });
     final state = ref.watch(productListProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('商品列表')),
+      appBar: AppBar(title: const Text(TextConstants.productListTitle)),
       body: RefreshIndicator(
         onRefresh: () => ref.read(productListProvider.notifier).refresh(),
         child: NotificationListener<ScrollNotification>(
@@ -64,13 +67,20 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
                       final p = state.items[index];
                       return ProductCard(
                         product: p,
-                        onFavoriteTap: () => ref.read(productListProvider.notifier).toggleFavorite(p.id),
+                        onFavoriteTap: () {
+                          final token = ref.read(authTokenProvider);
+                          if (token == null || token.isEmpty) {
+                            AppRouter.goLogin(context);
+                            return;
+                          }
+                          ref.read(productListProvider.notifier).toggleFavorite(p.id);
+                        },
                       );
                     }
                     if (state.isLoadingMore || state.hasMore) {
                       return const Center(child: CircularProgressIndicator());
                     }
-                    return const Center(child: Text('没有更多了'));
+                    return const Center(child: Text(TextConstants.noMoreItems));
                   },
                 ),
         ),
