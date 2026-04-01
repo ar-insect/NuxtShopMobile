@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:http/http.dart' as http;
-import 'package:http/browser_client.dart' as http_browser;
 import '../common/constants/api_constants.dart';
+import 'http_client_factory.dart' if (dart.library.html) 'http_client_factory_web.dart';
 
 typedef TokenGetter = String? Function();
 
@@ -17,7 +17,7 @@ class ApiClient {
   })  : _tokenGetter = tokenGetter,
         _onRequest = onRequest,
         _onResponse = onResponse,
-        _client = kIsWeb ? (http_browser.BrowserClient()..withCredentials = true) : http.Client();
+        _client = createHttpClient();
   Map<String, String> _buildHeaders({Map<String, String>? headers, bool withAuth = true}) {
     final result = <String, String>{'Content-Type': 'application/json'};
     if (withAuth) {

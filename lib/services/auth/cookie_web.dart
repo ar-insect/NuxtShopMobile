@@ -1,10 +1,10 @@
-import 'package:web/web.dart' as web;
+import 'dart:html' as html;
 
 void setAuthCookie(String token) {
-  final isHttps = web.window.location.protocol == 'https:';
+  final isHttps = html.window.location.protocol == 'https:';
   final secure = isHttps ? '; Secure' : '';
-  web.document.cookie = 'auth-token=$token; path=/; SameSite=Lax$secure';
+  html.document.cookie = 'auth-token=$token; path=/; SameSite=Lax$secure';
 }
 void clearAuthCookie() {
-  web.document.cookie = 'auth-token=; path=/; Max-Age=0; SameSite=Lax';
+  html.document.cookie = 'auth-token=; path=/; Max-Age=0; SameSite=Lax';
 }

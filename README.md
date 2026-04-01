@@ -41,6 +41,12 @@ flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:4000
 API_BASE_URL=http://localhost:4000 API_TOKEN=your-jwt-token ./scripts/run_web.sh
 ```
 
+macOS 调试：
+
+```bash
+API_BASE_URL=http://localhost:4000 flutter run -d macos
+```
+
 # 环境变量
 
 - API_BASE_URL：后端地址，例如 http://localhost:4000
@@ -58,6 +64,47 @@ API_BASE_URL=http://localhost:4000 API_TOKEN=your-jwt-token ./scripts/run_web.sh
 - GET /api/products?page=1&limit=16：商品列表（分页）
 - POST /api/wishlist：提交“当前所有收藏商品”的数组（全量同步）
 - GET /api/wishlist：读取收藏列表（返回数组或包含 items/data/products 等键的对象）
+
+# macOS 打包与常见坑
+
+打包 Release 版本的 macOS 应用：
+
+```bash
+chmod +x scripts/build_macos.sh
+API_BASE_URL=http://localhost:4000 ./scripts/build_macos.sh
+```
+
+构建成功后，产物在：
+
+```text
+build/macos/Build/Products/Release/my_app.app
+```
+
+## 踩坑记录
+
+1. `dart:js_interop` / `JSObject` 相关错误，指向 `.pub-cache/.../web-1.1.1/...`
+
+   - 原因：在跨平台代码中直接使用了 `package:http/browser_client.dart` 等依赖 Web 的实现，导致 macOS 构建时也去编译 `package:web`，而该包依赖 `dart:js_interop`。
+   - 解决方式：
+     - 移除对 `package:web` 的直接依赖；
+     - 用条件导入封装 HTTP 客户端：
+       - 非 Web 平台：`http_client_factory.dart` 返回 `http.Client()`；
+       - Web 平台：`http_client_factory_web.dart` 返回 `BrowserClient()..withCredentials = true`；
+     - 确保 Web-only 代码只在 `if (dart.library.html)` 的分支下被编译。
+
+2. 运行 `.app` 时出现 `SocketException: Operation not permitted (errno = 1)`，访问 `http://localhost:4000` 失败
+
+   - 现象：命令行 `curl http://localhost:4000` 正常，但桌面应用内所有网络请求都报 `Operation not permitted`。
+   - 原因：macOS 沙盒未配置网络客户端权限，默认只开启了 `com.apple.security.app-sandbox`。
+   - 解决方式：
+     - 在 `macos/Runner/DebugProfile.entitlements` 与 `macos/Runner/Release.entitlements` 中增加：
+
+       ```xml
+       <key>com.apple.security.network.client</key>
+       <true/>
+       ```
+
+     - 重新执行 `flutter build macos`，使用新生成的 `my_app.app`。
 
 # 功能概览
 
