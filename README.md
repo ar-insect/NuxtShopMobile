@@ -74,46 +74,86 @@ API_BASE_URL=http://localhost:4000 flutter run -d macos
 - POST /api/wishlist：提交“当前所有收藏商品”的数组（全量同步）
 - GET /api/wishlist：读取收藏列表（返回数组或包含 items/data/products 等键的对象）
 
-# macOS 打包与常见坑
+# iOS 模拟器调试流程与常见坑
 
-打包 Release 版本的 macOS 应用：
+## 调试流程
 
-```bash
-chmod +x scripts/build_macos.sh
-API_BASE_URL=http://localhost:4000 ./scripts/build_macos.sh
-```
+1. 准备环境
+   - 安装 Xcode，并至少打开一次。
+   - 在 Xcode 菜单 `Window -> Devices and Simulators` 中确认有可用的 iOS 模拟器（例如 iPhone 17 Pro Max）。
 
-构建成功后，产物在：
+2. 启动模拟器
+   - 在 `Devices and Simulators` 窗口的 **Simulators** 页签中，双击某个设备（或使用 `Xcode -> Open Developer Tool -> Simulator` 打开 Simulator，再在菜单 `Device` 中选择机型）。
+   - 确认有一个 iPhone 模拟器窗口在运行。
 
-```text
-build/macos/Build/Products/Release/my_app.app
-```
+3. 让 Flutter 识别设备
+   - 在项目根目录运行：
 
-## 踩坑记录
+     ```bash
+     flutter devices
+     ```
 
-1. `dart:js_interop` / `JSObject` 相关错误，指向 `.pub-cache/.../web-1.1.1/...`
+     列表中应出现类似：
 
-   - 原因：在跨平台代码中直接使用了 `package:http/browser_client.dart` 等依赖 Web 的实现，导致 macOS 构建时也去编译 `package:web`，而该包依赖 `dart:js_interop`。
+     ```text
+     iPhone 17 Pro Max (mobile) • XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX • ios • ...
+     ```
+
+4. 启动调试
+   - 终端调试：
+
+     ```bash
+     API_BASE_URL=http://localhost:4000 flutter run -d ios
+     ```
+
+   - VS Code 调试：
+     - 在底部状态栏选择当前设备为某个 iOS 模拟器。
+     - 使用 `.vscode/launch.json` 中的 `NuxtShopMobile (iOS Simulator)` 配置启动（配置中通过 `toolArgs` 注入了 `API_BASE_URL`）。
+
+5. 调试时的常用操作
+   - 在运行命令的终端中：
+     - `r`：热重载（Hot reload）
+     - `R`：热重启（Hot restart）
+   - 在模拟器中使用触控板双指滑动，或按住鼠标左键拖动列表来滚动页面。
+
+## 常见坑
+
+1. VS Code 提示 `Device "ios" was not found`
+   - 原因：launch.json 中使用了 `"deviceId": "ios"` 这样的别名，调试插件要求 `deviceId` 必须是真实设备 ID。
+   - 解决方式：不在 launch.json 中写死 `deviceId`，改为在 VS Code 状态栏选择设备；launch 配置只负责传递 `--dart-define` 等参数。
+
+2. 首次运行卡在 `Running pod install...`
+   - 原因：iOS 端需要通过 CocoaPods 安装原生依赖，首次安装可能下载较慢，或本机未安装 `pod`。
    - 解决方式：
-     - 移除对 `package:web` 的直接依赖；
-     - 用条件导入封装 HTTP 客户端：
-       - 非 Web 平台：`http_client_factory.dart` 返回 `http.Client()`；
-       - Web 平台：`http_client_factory_web.dart` 返回 `BrowserClient()..withCredentials = true`；
-     - 确保 Web-only 代码只在 `if (dart.library.html)` 的分支下被编译。
+     - 确认本机已安装 CocoaPods：
 
-2. 运行 `.app` 时出现 `SocketException: Operation not permitted (errno = 1)`，访问 `http://localhost:4000` 失败
-
-   - 现象：命令行 `curl http://localhost:4000` 正常，但桌面应用内所有网络请求都报 `Operation not permitted`。
-   - 原因：macOS 沙盒未配置网络客户端权限，默认只开启了 `com.apple.security.app-sandbox`。
-   - 解决方式：
-     - 在 `macos/Runner/DebugProfile.entitlements` 与 `macos/Runner/Release.entitlements` 中增加：
-
-       ```xml
-       <key>com.apple.security.network.client</key>
-       <true/>
+       ```bash
+       sudo gem install cocoapods
+       pod setup
        ```
 
-     - 重新执行 `flutter build macos`，使用新生成的 `my_app.app`。
+     - 如有需要，可手动执行：
+
+       ```bash
+       cd ios
+       pod install
+       cd ..
+       ```
+
+3. 列表数据正常但图片不加载
+   - 现象：接口请求 200，商品名称与价格正常显示，但 `Image.network` 不显示图片。
+   - 原因：iOS 的 App Transport Security（ATS）默认禁止 HTTP 资源访问。
+   - 解决方式：在 `ios/Runner/Info.plist` 中增加：
+
+     ```xml
+     <key>NSAppTransportSecurity</key>
+     <dict>
+       <key>NSAllowsArbitraryLoads</key>
+       <true/>
+     </dict>
+     ```
+
+     然后重新构建并运行 iOS 应用。
 
 # 功能概览
 
@@ -179,3 +219,44 @@ lib/
 - **router 层**：集中管理路由表与导航辅助方法，UI 层只调用 `AppRouter.goXxx`
 - **pages 层**：聚焦 UI + 调用 service/repository，不直接做网络请求
 - **widgets 层**：可复用组件（商品卡片、底部导航等），尽量保持无业务逻辑或仅包含少量可配置逻辑
+
+# macOS 打包与常见坑
+
+打包 Release 版本的 macOS 应用：
+
+```bash
+chmod +x scripts/build_macos.sh
+API_BASE_URL=http://localhost:4000 ./scripts/build_macos.sh
+```
+
+构建成功后，产物在：
+
+```text
+build/macos/Build/Products/Release/my_app.app
+```
+
+## 踩坑记录
+
+1. `dart:js_interop` / `JSObject` 相关错误，指向 `.pub-cache/.../web-1.1.1/...`
+
+   - 原因：在跨平台代码中直接使用了 `package:http/browser_client.dart` 等依赖 Web 的实现，导致 macOS 构建时也去编译 `package:web`，而该包依赖 `dart:js_interop`。
+   - 解决方式：
+     - 移除对 `package:web` 的直接依赖；
+     - 用条件导入封装 HTTP 客户端：
+       - 非 Web 平台：`http_client_factory.dart` 返回 `http.Client()`；
+       - Web 平台：`http_client_factory_web.dart` 返回 `BrowserClient()..withCredentials = true`；
+     - 确保 Web-only 代码只在 `if (dart.library.html)` 的分支下被编译。
+
+2. 运行 `.app` 时出现 `SocketException: Operation not permitted (errno = 1)`，访问 `http://localhost:4000` 失败
+
+   - 现象：命令行 `curl http://localhost:4000` 正常，但桌面应用内所有网络请求都报 `Operation not permitted`。
+   - 原因：macOS 沙盒未配置网络客户端权限，默认只开启了 `com.apple.security.app-sandbox`。
+   - 解决方式：
+     - 在 `macos/Runner/DebugProfile.entitlements` 与 `macos/Runner/Release.entitlements` 中增加：
+
+       ```xml
+       <key>com.apple.security.network.client</key>
+       <true/>
+       ```
+
+     - 重新执行 `flutter build macos`，使用新生成的 `my_app.app`。

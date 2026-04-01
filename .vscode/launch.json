@@ -27,7 +27,6 @@
             "name": "NuxtShopMobile (iOS Simulator)",
             "request": "launch",
             "type": "dart",
-            "deviceId": "ios",
             "toolArgs": [
                 "--dart-define",
                 "API_BASE_URL=http://localhost:4000"

@@ -23,6 +23,14 @@ class ProductCard extends StatelessWidget {
                   child: Image.network(
                     product.imageUrl,
                     fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      print('Image load error for ${product.imageUrl}: $error');
+                      return Container(
+                        color: ThemeColors.skeleton,
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.broken_image, size: 32, color: Colors.grey),
+                      );
+                    },
                   ),
                 ),
               ),
