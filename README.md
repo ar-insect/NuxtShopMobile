@@ -47,6 +47,15 @@ macOS 调试：
 API_BASE_URL=http://localhost:4000 flutter run -d macos
 ```
 
+说明：
+
+- `-d macos`：指定在 macOS 桌面运行（而不是浏览器或手机模拟器）
+- `API_BASE_URL`：指向本地或测试环境后端地址
+- 调试过程中，在运行命令的终端里：
+  - 按 `r`：热重载（保留大部分状态，只刷新代码）
+  - 按 `R`：热重启（重新执行 `main`，清空状态）
+- 如果使用 VS Code / Android Studio，只需把上面的参数加到 Run 配置中，并选择设备 `macOS` 即可打断点调试 Dart 代码。
+
 # 环境变量
 
 - API_BASE_URL：后端地址，例如 http://localhost:4000
