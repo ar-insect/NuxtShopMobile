@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/auth/auth_token_provider.dart';
+import '../../services/auth/auth_token_store.dart';
 import '../../services/auth/cookie.dart';
 import '../home/home_root_page.dart';
 
@@ -19,8 +19,7 @@ class _StartupGateState extends ConsumerState<StartupGate> {
     _init();
   }
   Future<void> _init() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
+    final token = await AuthTokenStore.read();
     ref.read(authTokenProvider.notifier).state = token;
     if (token != null && token.isNotEmpty) {
       setAuthCookie(token);

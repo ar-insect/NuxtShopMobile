@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../common/errors/app_error.dart';
 import '../../models/product.dart';
 import '../../repositories/product_repository.dart';
 import '../auth/auth_token_provider.dart';
@@ -8,7 +9,7 @@ class ProductListState {
   final bool isRefreshing;
   final bool isLoadingMore;
   final bool hasMore;
-  final String? error;
+  final AppError? error;
   const ProductListState({
     this.items = const [],
     this.isRefreshing = false,
@@ -21,7 +22,7 @@ class ProductListState {
     bool? isRefreshing,
     bool? isLoadingMore,
     bool? hasMore,
-    String? error,
+    AppError? error,
   }) {
     return ProductListState(
       items: items ?? this.items,
@@ -66,8 +67,9 @@ class ProductListNotifier extends StateNotifier<ProductListState> {
         isLoadingMore: false,
         hasMore: merged.length == _pageSize,
       );
-    } catch (e) {
-      state = state.copyWith(isRefreshing: false, error: e.toString());
+    } catch (e, st) {
+      final err = e is AppError ? e : AppError.unknown(e.toString(), cause: e, stackTrace: st);
+      state = state.copyWith(isRefreshing: false, error: err);
     }
   }
   Future<void> loadMore() async {
@@ -86,8 +88,9 @@ class ProductListNotifier extends StateNotifier<ProductListState> {
         isLoadingMore: false,
         hasMore: patched.length == _pageSize,
       );
-    } catch (e) {
-      state = state.copyWith(isLoadingMore: false, error: e.toString());
+    } catch (e, st) {
+      final err = e is AppError ? e : AppError.unknown(e.toString(), cause: e, stackTrace: st);
+      state = state.copyWith(isLoadingMore: false, error: err);
     }
   }
   Future<void> toggleFavorite(int id) async {
@@ -102,8 +105,9 @@ class ProductListNotifier extends StateNotifier<ProductListState> {
     try {
       final favorites = optimistic.where((p) => p.isFavorite).toList(growable: false);
       await _repo.setWishlist(favorites: favorites);
-    } catch (e) {
-      state = state.copyWith(items: previousList, error: e.toString());
+    } catch (e, st) {
+      final err = e is AppError ? e : AppError.unknown(e.toString(), cause: e, stackTrace: st);
+      state = state.copyWith(items: previousList, error: err);
       final prevFavorites = previousList.where((p) => p.isFavorite).toList(growable: false);
       try {
         await _repo.setWishlist(favorites: prevFavorites);

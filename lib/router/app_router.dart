@@ -10,7 +10,15 @@ class AppRouter {
       case RouteNames.splash:
         return MaterialPageRoute(builder: (_) => const StartupGate());
       case RouteNames.login:
-        return MaterialPageRoute(builder: (_) => const LoginPage());
+        final args = settings.arguments;
+        bool fromLogout = false;
+        if (args is Map) {
+          final value = args['fromLogout'];
+          if (value == true) {
+            fromLogout = true;
+          }
+        }
+        return MaterialPageRoute(builder: (_) => LoginPage(fromLogout: fromLogout));
       case RouteNames.home:
         return MaterialPageRoute(builder: (_) => const HomeRootPage());
       default:
@@ -18,8 +26,12 @@ class AppRouter {
     }
   }
 
-  static void goLogin(BuildContext context) {
-    Navigator.of(context).pushNamedAndRemoveUntil(RouteNames.login, (route) => false);
+  static void goLogin(BuildContext context, {bool fromLogout = false}) {
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      RouteNames.login,
+      (route) => false,
+      arguments: fromLogout ? {'fromLogout': true} : null,
+    );
   }
 
   static void goHome(BuildContext context) {

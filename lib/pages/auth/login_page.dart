@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../repositories/auth_repository.dart';
 import '../../services/auth/auth_token_provider.dart';
+import '../../services/auth/auth_token_store.dart';
 import '../../services/auth/cookie.dart';
 import '../../common/constants/text_constants.dart';
 import '../../router/app_router.dart';
@@ -10,7 +10,8 @@ import '../../router/app_router.dart';
 final authRepositoryProvider = Provider<AuthRepository>((ref) => AuthRepository());
 
 class LoginPage extends ConsumerStatefulWidget {
-  const LoginPage({super.key});
+  final bool fromLogout;
+  const LoginPage({super.key, this.fromLogout = false});
   @override
   ConsumerState<LoginPage> createState() => _LoginPageState();
 }
@@ -19,6 +20,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _usernameCtrl = TextEditingController();
   final _pwdCtrl = TextEditingController();
   bool _loading = false;
+  @override
+  void initState() {
+    super.initState();
+    if (widget.fromLogout) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已退出登录')));
+      });
+    }
+  }
   @override
   void dispose() {
     _usernameCtrl.dispose();
@@ -31,8 +42,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     try {
       final repo = ref.read(authRepositoryProvider);
       final token = await repo.login(username: _usernameCtrl.text.trim(), password: _pwdCtrl.text);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('auth_token', token);
+      await AuthTokenStore.save(token);
       ref.read(authTokenProvider.notifier).state = token;
       setAuthCookie(token);
       if (mounted) {

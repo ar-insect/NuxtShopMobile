@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../models/product.dart';
 import '../common/constants/theme_constants.dart';
@@ -20,10 +21,13 @@ class ProductCard extends StatelessWidget {
                 aspectRatio: 4 / 3,
                 child: ClipRRect(
                   borderRadius: const BorderRadius.only(topLeft: Radius.circular(ThemeSizes.cardRadius), topRight: Radius.circular(ThemeSizes.cardRadius)),
-                  child: Image.network(
-                    product.imageUrl,
+                  child: CachedNetworkImage(
+                    imageUrl: product.imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
+                    placeholder: (context, url) {
+                      return Container(color: ThemeColors.skeleton);
+                    },
+                    errorWidget: (context, url, error) {
                       print('Image load error for ${product.imageUrl}: $error');
                       return Container(
                         color: ThemeColors.skeleton,

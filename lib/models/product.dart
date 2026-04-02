@@ -1,16 +1,17 @@
-class Product {
-  final int id;
-  final String name;
-  final double price;
-  final String imageUrl;
-  final bool isFavorite;
-  const Product({
-    required this.id,
-    required this.name,
-    required this.price,
-    required this.imageUrl,
-    this.isFavorite = false,
-  });
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'product.freezed.dart';
+
+@freezed
+class Product with _$Product {
+  const factory Product({
+    required int id,
+    required String name,
+    required double price,
+    required String imageUrl,
+    @Default(false) bool isFavorite,
+  }) = _Product;
+
   factory Product.fromJson(Map<String, dynamic> json) {
     final idRaw = json['id'];
     final nameRaw = json['name'] ?? json['title'] ?? '';
@@ -23,21 +24,6 @@ class Product {
       price: priceRaw is num ? priceRaw.toDouble() : double.tryParse(priceRaw?.toString() ?? '0') ?? 0,
       imageUrl: imageRaw.toString(),
       isFavorite: favRaw == true || favRaw.toString() == 'true',
-    );
-  }
-  Product copyWith({
-    int? id,
-    String? name,
-    double? price,
-    String? imageUrl,
-    bool? isFavorite,
-  }) {
-    return Product(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      price: price ?? this.price,
-      imageUrl: imageUrl ?? this.imageUrl,
-      isFavorite: isFavorite ?? this.isFavorite,
     );
   }
 }
